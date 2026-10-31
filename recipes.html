@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipes | Healthy Recipe Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="page-intro">
+      <h1>Explore our simple, healthy recipes</h1>
+      <p>Discover quick, whole-food dishes that fit real-life schedules and taste amazing. Use the search bar to find a recipe by name or ingredient, or simply scroll the list and let something delicious catch your eye.</p>
+    </section>
+
+    <div class="toolbar">
+      <div class="filters">
+        <div class="select-wrap">
+          <select id="prep" aria-label="Max prep time">
+            <option value="">Max Prep Time</option>
+            <option value="0">0 minutes</option>
+            <option value="5">5 minutes</option>
+            <option value="10">10 minutes</option>
+          </select>
+        </div>
+        <div class="select-wrap">
+          <select id="cook" aria-label="Max cook time">
+            <option value="">Max Cook Time</option>
+            <option value="0">0 minutes</option>
+            <option value="5">5 minutes</option>
+            <option value="10">10 minutes</option>
+            <option value="15">15 minutes</option>
+            <option value="20">20 minutes</option>
+          </select>
+        </div>
+      </div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input type="search" id="search" placeholder="Search by name or ingredient…" aria-label="Search recipes" />
+      </div>
+    </div>
+
+    <div class="recipe-grid" id="grid"></div>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    renderHeader("recipes");
+    renderFooter();
+
+    const recipes = getAllRecipes();
+    const grid = document.getElementById("grid");
+    const prep = document.getElementById("prep");
+    const cook = document.getElementById("cook");
+    const search = document.getElementById("search");
+
+    function update() {
+      const q = search.value.trim().toLowerCase();
+      const maxPrep = prep.value === "" ? Infinity : Number(prep.value);
+      const maxCook = cook.value === "" ? Infinity : Number(cook.value);
+      const list = recipes.filter((r) =>
+        r.prepMinutes <= maxPrep &&
+        r.cookMinutes <= maxCook &&
+        (!q || r.title.toLowerCase().includes(q) || r.ingredients.some((i) => i.toLowerCase().includes(q)))
+      );
+      grid.innerHTML = list.length
+        ? list.map(recipeCard).join("")
+        : '<p class="empty-state">No recipes match your filters. Try a different search.</p>';
+    }
+
+    [prep, cook].forEach((el) => el.addEventListener("change", update));
+    search.addEventListener("input", update);
+    update();
+  </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipe | Healthy Recipe Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="container" id="content"></main>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    renderHeader("recipes");
+    renderFooter();
+
+    const slug = new URLSearchParams(location.search).get("slug");
+    const all = getAllRecipes();
+    const recipe = all.find((r) => r.slug === slug);
+    const content = document.getElementById("content");
+
+    if (!recipe) {
+      content.innerHTML = `
+        <section class="page-intro">
+          <h1>Recipe not found</h1>
+          <p>We couldn’t find that recipe.</p>
+          <p style="margin-top:24px"><a href="recipes.html" class="btn">Back to recipes</a></p>
+        </section>`;
+    } else {
+      document.title = `${recipe.title} | Healthy Recipe Finder`;
+      const list = (items) => items.map((i) => `<li>${ICONS.arrow}<span>${escapeHtml(i)}</span></li>`).join("");
+      const more = all.filter((r) => r.slug !== slug).slice(0, 3);
+      content.innerHTML = `
+        <nav class="breadcrumb" aria-label="Breadcrumb"><a href="recipes.html">Recipes</a> / <strong>${escapeHtml(recipe.title)}</strong></nav>
+        <article class="recipe-detail">
+          <img src="${escapeHtml(recipe.image)}" alt="${escapeHtml(recipe.title)}" />
+          <div>
+            <h1>${escapeHtml(recipe.title)}</h1>
+            <p class="lead">${escapeHtml(recipe.overview)}</p>
+            ${recipeMeta(recipe)}
+            <h2>Ingredients:</h2>
+            <ul class="ingredients">${list(recipe.ingredients)}</ul>
+            <h2>Instructions:</h2>
+            <ul class="instructions">${list(recipe.instructions)}</ul>
+          </div>
+        </article>
+        <section class="more-recipes">
+          <h2>More recipes</h2>
+          <div class="recipe-grid">${more.map(recipeCard).join("")}</div>
+        </section>`;
+    }
+  </script>
+</body>
+</html>
