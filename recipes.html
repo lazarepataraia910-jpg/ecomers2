@@ -47,12 +47,15 @@
   </main>
 
   <script src="js/data.js"></script>
+  <script src="js/favorites.js"></script>
   <script src="js/layout.js"></script>
-  <script>
+  <script type="module">
+    import { fetchAllRecipes } from "./js/store.js";
+
     renderHeader("recipes");
     renderFooter();
 
-    const recipes = getAllRecipes();
+    const recipes = await fetchAllRecipes();
     const grid = document.getElementById("grid");
     const prep = document.getElementById("prep");
     const cook = document.getElementById("cook");

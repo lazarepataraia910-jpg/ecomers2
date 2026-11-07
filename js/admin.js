@@ -1,41 +1,30 @@
-// Admin panel: add, edit and delete custom recipes (stored in localStorage).
-// NOTE: the password check runs in the browser, so it only keeps casual
-// visitors out. Change ADMIN_PASSWORD before publishing.
-const ADMIN_PASSWORD = "admin123";
-const SESSION_KEY = "hrf_admin";
+// Admin panel: add, edit and delete recipes. Requires a logged-in user.
+import {
+  fetchCustomRecipes, saveRecipe, deleteRecipe, resizeImage, uploadImage,
+  getUser, signOut, usingSupabase
+} from "./store.js";
+
+const user = await getUser();
+if (!user) {
+  location.replace("login.html");
+  throw new Error("Not logged in");
+}
 
 renderHeader("");
 renderFooter();
 
 const $ = (id) => document.getElementById(id);
-const loginEl = $("login");
-const dashEl = $("dashboard");
 const form = $("recipe-form");
-let imageData = "";
+let imageBlob = null;
+let imagePreview = "";
 let editingSlug = null;
 
-function showView() {
-  const loggedIn = sessionStorage.getItem(SESSION_KEY) === "1";
-  loginEl.hidden = loggedIn;
-  dashEl.hidden = !loggedIn;
-  if (loggedIn) renderLists();
-}
+if (usingSupabase) $("who").textContent = `Signed in as ${user.email}. Recipes you publish are visible to everyone.`;
+else $("local-notice").hidden = false;
 
-$("login-form").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const field = $("password").closest(".field");
-  if ($("password").value === ADMIN_PASSWORD) {
-    sessionStorage.setItem(SESSION_KEY, "1");
-    field.classList.remove("has-error");
-    showView();
-  } else {
-    field.classList.add("has-error");
-  }
-});
-
-$("logout").addEventListener("click", () => {
-  sessionStorage.removeItem(SESSION_KEY);
-  showView();
+$("logout").addEventListener("click", async () => {
+  await signOut();
+  location.replace("login.html");
 });
 
 function toast(msg) {
@@ -43,33 +32,11 @@ function toast(msg) {
   t.textContent = msg;
   t.classList.add("show");
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => t.classList.remove("show"), 2500);
-}
-
-// Resize uploads to max 900px so they fit in localStorage.
-function readImage(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const scale = Math.min(1, 900 / Math.max(img.width, img.height));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.8));
-      };
-      img.onerror = reject;
-      img.src = reader.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+  toast.timer = setTimeout(() => t.classList.remove("show"), 3000);
 }
 
 function setPreview(src) {
-  imageData = src;
+  imagePreview = src;
   $("preview").src = src || "";
   $("preview").hidden = !src;
   $("drop-text").textContent = src ? "Click to change image" : "Click or drag an image here (JPG, PNG, WebP)";
@@ -77,8 +44,13 @@ function setPreview(src) {
 
 async function handleFile(file) {
   if (!file || !file.type.startsWith("image/")) return toast("Please choose an image file");
-  setPreview(await readImage(file));
-  $("dropzone").closest(".field").classList.remove("has-error");
+  try {
+    imageBlob = await resizeImage(file);
+    setPreview(URL.createObjectURL(imageBlob));
+    $("dropzone").closest(".field").classList.remove("has-error");
+  } catch (err) {
+    toast(err.message);
+  }
 }
 
 $("image").addEventListener("change", (e) => handleFile(e.target.files[0]));
@@ -95,7 +67,7 @@ const lines = (text) => text.split("\n").map((l) => l.trim()).filter(Boolean);
 
 function validate() {
   const checks = [
-    [dz, !!imageData],
+    [dz, !!imagePreview],
     [$("title"), $("title").value.trim()],
     [$("overview"), $("overview").value.trim()],
     [$("ingredients"), lines($("ingredients").value).length],
@@ -111,6 +83,7 @@ function validate() {
 
 function resetForm() {
   form.reset();
+  imageBlob = null;
   setPreview("");
   editingSlug = null;
   $("form-title").textContent = "Add new recipe";
@@ -121,44 +94,52 @@ function resetForm() {
 
 $("cancel-edit").addEventListener("click", resetForm);
 
-form.addEventListener("submit", (e) => {
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!validate()) return;
 
-  const title = $("title").value.trim();
-  const custom = getCustomRecipes();
-  const taken = new Set(getAllRecipes().map((r) => r.slug).filter((s) => s !== editingSlug));
-  let slug = editingSlug || slugify(title) || "recipe";
-  if (!editingSlug) {
-    const base = slug;
-    for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
-  }
-
-  const recipe = {
-    slug,
-    title,
-    overview: $("overview").value.trim(),
-    servings: Math.max(1, Number($("servings").value) || 1),
-    prepMinutes: Math.max(0, Number($("prepMinutes").value) || 0),
-    cookMinutes: Math.max(0, Number($("cookMinutes").value) || 0),
-    image: imageData,
-    ingredients: lines($("ingredients").value),
-    instructions: lines($("instructions").value),
-    custom: true
-  };
-
-  const idx = custom.findIndex((r) => r.slug === slug);
-  if (idx >= 0) custom[idx] = recipe;
-  else custom.unshift(recipe);
+  const btn = $("submit-btn");
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Saving…";
 
   try {
-    saveCustomRecipes(custom);
-  } catch {
-    return toast("Storage is full — delete a recipe or use a smaller image");
+    const title = $("title").value.trim();
+    const existing = await fetchCustomRecipes();
+    const taken = new Set([...existing, ...DEFAULT_RECIPES].map((r) => r.slug).filter((s) => s !== editingSlug));
+    let slug = editingSlug || slugify(title) || "recipe";
+    if (!editingSlug) {
+      const base = slug;
+      for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
+    }
+
+    // Keep the old image when editing without choosing a new one.
+    let image = imagePreview;
+    if (imageBlob) image = await uploadImage(imageBlob, slug);
+
+    await saveRecipe({
+      slug,
+      title,
+      overview: $("overview").value.trim(),
+      servings: Math.max(1, Number($("servings").value) || 1),
+      prepMinutes: Math.max(0, Number($("prepMinutes").value) || 0),
+      cookMinutes: Math.max(0, Number($("cookMinutes").value) || 0),
+      image,
+      ingredients: lines($("ingredients").value),
+      instructions: lines($("instructions").value),
+      custom: true
+    }, editingSlug);
+
+    toast(editingSlug ? "Recipe updated" : "Recipe published");
+    resetForm();
+    await renderLists();
+  } catch (err) {
+    console.error(err);
+    toast(err.name === "QuotaExceededError" ? "Storage is full — delete a recipe or use a smaller image" : `Could not save: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = editingSlug ? "Save changes" : label === "Saving…" ? "Publish recipe" : label;
   }
-  toast(editingSlug ? "Recipe updated" : "Recipe published");
-  resetForm();
-  renderLists();
 });
 
 function itemHtml(r, editable) {
@@ -178,28 +159,34 @@ function itemHtml(r, editable) {
     </li>`;
 }
 
-function renderLists() {
-  const custom = getCustomRecipes();
+let custom = [];
+async function renderLists() {
+  custom = await fetchCustomRecipes();
   $("custom-list").innerHTML = custom.length
     ? custom.map((r) => itemHtml(r, true)).join("")
     : '<li class="muted">No uploaded recipes yet. Use the form to add one.</li>';
   $("default-list").innerHTML = DEFAULT_RECIPES.map((r) => itemHtml(r, false)).join("");
 }
 
-$("custom-list").addEventListener("click", (e) => {
+$("custom-list").addEventListener("click", async (e) => {
   const del = e.target.closest("[data-delete]");
   const edit = e.target.closest("[data-edit]");
   if (del) {
     const slug = del.dataset.delete;
     if (!confirm("Delete this recipe?")) return;
-    saveCustomRecipes(getCustomRecipes().filter((r) => r.slug !== slug));
+    try {
+      await deleteRecipe(slug);
+    } catch (err) {
+      return toast(`Could not delete: ${err.message}`);
+    }
     if (editingSlug === slug) resetForm();
-    renderLists();
+    await renderLists();
     toast("Recipe deleted");
   }
   if (edit) {
-    const r = getCustomRecipes().find((x) => x.slug === edit.dataset.edit);
+    const r = custom.find((x) => x.slug === edit.dataset.edit);
     if (!r) return;
+    resetForm();
     editingSlug = r.slug;
     $("title").value = r.title;
     $("overview").value = r.overview;
@@ -216,4 +203,4 @@ $("custom-list").addEventListener("click", (e) => {
   }
 });
 
-showView();
+await renderLists();

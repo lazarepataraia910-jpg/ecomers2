@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Login | Healthy Recipe Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="container admin-wrap">
+    <section class="panel login-box">
+      <h2>Admin login</h2>
+      <p class="notice" id="local-notice" hidden>
+        Supabase is not connected yet, so this is local mode. Use the password from the README.
+      </p>
+      <form id="login-form" class="form-grid" novalidate>
+        <div class="field" id="email-field">
+          <label for="email">Email</label>
+          <input type="email" id="email" autocomplete="username" />
+        </div>
+        <div class="field" id="password-field">
+          <label for="password">Password</label>
+          <input type="password" id="password" autocomplete="current-password" required />
+          <p class="error" id="error">Wrong password.</p>
+        </div>
+        <button class="btn" type="submit" id="submit">Log in</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/favorites.js"></script>
+  <script src="js/layout.js"></script>
+  <script type="module">
+    import { signIn, getUser, usingSupabase } from "./js/store.js";
+
+    renderHeader("");
+    renderFooter();
+
+    if (await getUser()) location.replace("admin.html");
+
+    const $ = (id) => document.getElementById(id);
+    if (!usingSupabase) {
+      $("email-field").hidden = true;
+      $("local-notice").hidden = false;
+    }
+
+    $("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const field = $("password-field");
+      const btn = $("submit");
+      btn.disabled = true;
+      btn.textContent = "Logging in…";
+      try {
+        await signIn($("email").value.trim(), $("password").value);
+        location.replace("admin.html");
+      } catch (err) {
+        $("error").textContent = err.message;
+        field.classList.add("has-error");
+        btn.disabled = false;
+        btn.textContent = "Log in";
+      }
+    });
+  </script>
+</body>
+</html>

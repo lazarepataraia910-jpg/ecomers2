@@ -12,25 +12,13 @@
 </head>
 <body>
   <main class="container admin-wrap">
-    <!-- Login -->
-    <section id="login" class="panel login-box" hidden>
-      <h2>Admin login</h2>
-      <form id="login-form" class="form-grid">
-        <div class="field">
-          <label for="password">Password</label>
-          <input type="password" id="password" autocomplete="current-password" required />
-          <p class="error">Wrong password.</p>
-        </div>
-        <button class="btn" type="submit">Log in</button>
-      </form>
-    </section>
-
     <!-- Dashboard -->
-    <section id="dashboard" hidden>
+    <section id="dashboard">
       <div style="display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap">
         <div>
           <h1>Admin panel</h1>
-          <p class="muted">Upload new recipes. They appear on the Recipes page right away.</p>
+          <p class="muted" id="who">Upload new recipes. They appear on the Recipes page right away.</p>
+          <p class="notice" id="local-notice" hidden style="margin-top:12px">Local mode: recipes are saved only in this browser until Supabase is connected (see README).</p>
         </div>
         <button class="btn btn-outline btn-sm" id="logout">Log out</button>
       </div>
@@ -109,6 +97,7 @@
 
   <script src="js/data.js"></script>
   <script src="js/layout.js"></script>
-  <script src="js/admin.js"></script>
+  <script src="js/favorites.js"></script>
+  <script type="module" src="js/admin.js"></script>
 </body>
 </html>

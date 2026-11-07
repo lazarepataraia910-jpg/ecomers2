@@ -176,7 +176,7 @@ ul { margin: 0; padding: 0; }
 @media (max-width: 1023px) { .recipe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 639px) { .recipe-grid { grid-template-columns: minmax(0, 1fr); } }
 .recipe-card { background: var(--white); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(22,58,52,.06); border: 1px solid #efede8; }
-.recipe-card img { width: 100%; aspect-ratio: 1/0.83; object-fit: cover; border-radius: 8px; }
+.recipe-card .card-img img { width: 100%; aspect-ratio: 1/0.83; object-fit: cover; border-radius: 8px; }
 .recipe-card h3 { font-size: 20px; font-weight: 700; margin: 16px 8px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .recipe-card p { font-size: 15px; margin: 0 8px 16px; color: var(--text); }
 .recipe-card .recipe-meta { margin: 0 8px 16px; }
@@ -242,3 +242,15 @@ ul { margin: 0; padding: 0; }
 .toast.show { transform: translateX(-50%) translateY(0); }
 .login-box { max-width: 420px; margin: 40px auto 0; }
 .muted { color: var(--muted); }
+
+/* Favorites */
+.card-img { position: relative; }
+.fav-btn { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); display: grid; place-items: center; cursor: pointer; box-shadow: 0 2px 8px rgba(22,58,52,.18); transition: transform .15s; }
+.fav-btn:hover { transform: scale(1.1); }
+.fav-btn svg { width: 22px; height: 22px; fill: none; stroke: var(--green-900); stroke-width: 2; }
+.fav-btn.active svg { fill: #e5484d; stroke: #e5484d; }
+.fav-detail { display: inline-flex; align-items: center; gap: 8px; margin-top: 20px; }
+.fav-detail svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+.fav-detail.active svg { fill: #e5484d; stroke: #e5484d; }
+.admin-link { text-decoration: underline; text-underline-offset: 3px; }
+.notice { background: #fff4ec; border: 1px solid var(--orange-soft); border-radius: 10px; padding: 12px 16px; font-size: 15px; margin-bottom: 20px; }

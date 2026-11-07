@@ -13,13 +13,16 @@
   <main class="container" id="content"></main>
 
   <script src="js/data.js"></script>
+  <script src="js/favorites.js"></script>
   <script src="js/layout.js"></script>
-  <script>
+  <script type="module">
+    import { fetchAllRecipes } from "./js/store.js";
+
     renderHeader("recipes");
     renderFooter();
 
     const slug = new URLSearchParams(location.search).get("slug");
-    const all = getAllRecipes();
+    const all = await fetchAllRecipes();
     const recipe = all.find((r) => r.slug === slug);
     const content = document.getElementById("content");
 
@@ -42,6 +45,10 @@
             <h1>${escapeHtml(recipe.title)}</h1>
             <p class="lead">${escapeHtml(recipe.overview)}</p>
             ${recipeMeta(recipe)}
+            <button type="button" class="btn btn-outline btn-sm fav-detail fav-btn-detail ${isFavorite(recipe.slug) ? "active" : ""}" data-slug="${escapeHtml(recipe.slug)}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 2.8 4.5 6.4 4.5c2 0 3.7 1.1 5.6 3.2 1.9-2.1 3.6-3.2 5.6-3.2 3.6 0 5.5 3.7 4 7.2C19.5 16.4 12 21 12 21z"/></svg>
+              <span>${isFavorite(recipe.slug) ? "Saved to favorites" : "Add to favorites"}</span>
+            </button>
             <h2>Ingredients:</h2>
             <ul class="ingredients">${list(recipe.ingredients)}</ul>
             <h2>Instructions:</h2>
@@ -53,6 +60,14 @@
           <div class="recipe-grid">${more.map(recipeCard).join("")}</div>
         </section>`;
     }
+
+    // Detail-page heart button (separate from the card hearts).
+    const detailFav = document.querySelector(".fav-btn-detail");
+    if (detailFav) detailFav.addEventListener("click", () => {
+      const on = toggleFavorite(detailFav.dataset.slug);
+      detailFav.classList.toggle("active", on);
+      detailFav.querySelector("span").textContent = on ? "Saved to favorites" : "Add to favorites";
+    });
   </script>
 </body>
 </html>

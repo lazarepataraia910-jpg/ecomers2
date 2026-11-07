@@ -16,7 +16,8 @@ function renderHeader(active) {
   const links = [
     ["index.html", "Home", "home"],
     ["about.html", "About", "about"],
-    ["recipes.html", "Recipes", "recipes"]
+    ["recipes.html", "Recipes", "recipes"],
+    ["favorites.html", "Favorites", "favorites"]
   ];
   const nav = links
     .map(([href, label, key]) => `<li><a href="${href}" class="${key === active ? "active" : ""}">${label}</a></li>`)
@@ -53,7 +54,7 @@ function renderFooter() {
   footer.className = "site-footer";
   footer.innerHTML = `
     <div class="container footer-inner">
-      <p>Made with ❤️ and 🥑</p>
+      <p>Made with ❤️ and 🥑 · <a href="login.html" class="admin-link">Admin</a></p>
       <ul class="socials">
         <li><a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm5 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm5.5-3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z"/></svg></a></li>
         <li><a href="#" aria-label="Bluesky"><svg viewBox="0 0 24 24"><path d="M5.2 3.6C7.9 5.6 10.8 9.7 12 12c1.2-2.3 4.1-6.4 6.8-8.4 2-1.5 5.2-2.6 5.2 1 0 .7-.4 6-.6 6.8-.8 2.9-3.7 3.6-6.3 3.2 4.5.8 5.7 3.3 3.2 5.9-4.7 4.8-6.8-1.2-7.3-2.8l-.2-.5-.2.5c-.5 1.6-2.6 7.6-7.3 2.8-2.5-2.6-1.3-5.1 3.2-5.9-2.6.4-5.5-.3-6.3-3.2C.4 10.6 0 5.3 0 4.6c0-3.6 3.2-2.5 5.2-1z"/></svg></a></li>
@@ -76,11 +77,21 @@ function recipeMeta(r) {
     </ul>`;
 }
 
+function favButton(slug) {
+  const on = isFavorite(slug);
+  return `<button type="button" class="fav-btn ${on ? "active" : ""}" data-slug="${escapeHtml(slug)}" aria-pressed="${on}" aria-label="${on ? "Remove from favorites" : "Add to favorites"}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 2.8 4.5 6.4 4.5c2 0 3.7 1.1 5.6 3.2 1.9-2.1 3.6-3.2 5.6-3.2 3.6 0 5.5 3.7 4 7.2C19.5 16.4 12 21 12 21z"/></svg>
+  </button>`;
+}
+
 function recipeCard(r) {
   const href = `recipe.html?slug=${encodeURIComponent(r.slug)}`;
   return `
     <article class="recipe-card">
-      <img src="${escapeHtml(r.image)}" alt="${escapeHtml(r.title)}" loading="lazy" />
+      <div class="card-img">
+        <img src="${escapeHtml(r.image)}" alt="${escapeHtml(r.title)}" loading="lazy" />
+        ${favButton(r.slug)}
+      </div>
       <h3 title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</h3>
       <p>${escapeHtml(r.overview)}</p>
       ${recipeMeta(r)}
