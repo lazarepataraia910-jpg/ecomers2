@@ -28,7 +28,10 @@ function renderHeader(active) {
     <div class="container header-inner">
       <a href="index.html" class="logo">${LOGO}<span>Healthy Recipe Finder</span></a>
       <nav class="main-nav" aria-label="Main"><ul>${nav}</ul></nav>
-      <a href="recipes.html" class="btn btn-sm header-cta">Browse recipes</a>
+      <div class="header-actions">
+        <a href="login.html" class="login-link">Login</a>
+        <a href="recipes.html" class="btn btn-sm header-cta">Browse recipes</a>
+      </div>
       <button class="menu-toggle" aria-label="Open menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
@@ -36,6 +39,7 @@ function renderHeader(active) {
     <div class="mobile-menu" hidden>
       <ul>${nav}</ul>
       <a href="recipes.html" class="btn btn-block">Browse recipes</a>
+      <a href="login.html" class="btn btn-outline btn-block" style="margin-top:8px">Login</a>
     </div>`;
   document.body.prepend(header);
 

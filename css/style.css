@@ -254,3 +254,9 @@ ul { margin: 0; padding: 0; }
 .fav-detail.active svg { fill: #e5484d; stroke: #e5484d; }
 .admin-link { text-decoration: underline; text-underline-offset: 3px; }
 .notice { background: #fff4ec; border: 1px solid var(--orange-soft); border-radius: 10px; padding: 12px 16px; font-size: 15px; margin-bottom: 20px; }
+
+/* Header login */
+.header-actions { display: flex; align-items: center; gap: 24px; }
+.login-link { font-family: var(--font-head); font-weight: 700; color: var(--green-900); text-decoration: none; padding: 8px 4px; border-bottom: 3px solid transparent; }
+.login-link:hover { border-color: var(--orange-soft); }
+@media (max-width: 767px) { .header-actions { display: none; } }
