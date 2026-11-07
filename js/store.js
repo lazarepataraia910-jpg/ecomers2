@@ -4,6 +4,9 @@ import { supabase, isConfigured } from "./supabase.js";
 
 const TABLE = "recipes";
 const BUCKET = "recipe-images";
+// The admin account created in Supabase → Authentication → Users.
+// The login form only asks for the password; the email is filled in here.
+const ADMIN_EMAIL = "irineirnola@gmail.com";
 // Local mode only — the check runs in the browser, so it is not real security.
 const LOCAL_PASSWORD = "admin123";
 const LOCAL_SESSION = "hrf_admin";
@@ -121,14 +124,14 @@ export async function uploadImage(blob, slug) {
 
 // ---------- Auth ----------
 
-export async function signIn(email, password) {
+export async function signIn(password) {
   if (!isConfigured) {
     if (password !== LOCAL_PASSWORD) throw new Error("Wrong password.");
     sessionStorage.setItem(LOCAL_SESSION, "1");
     return;
   }
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw new Error(error.message === "Invalid login credentials" ? "Wrong email or password." : error.message);
+  const { error } = await supabase.auth.signInWithPassword({ email: ADMIN_EMAIL, password });
+  if (error) throw new Error(error.message === "Invalid login credentials" ? "Wrong password." : error.message);
 }
 
 export async function signOut() {
